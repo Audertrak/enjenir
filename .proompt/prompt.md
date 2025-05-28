@@ -1,22 +1,18 @@
-# Enjenir (in development title)
+## Enjenir (in development title)
 
 A turn-based, puzzle/strategy card based simulator for Engineering principles.
 
-[!WARNING] GAME IN DEVELOPMENT: subject to frequent changes, incomplete features, and bugs.
+### Philosophy
 
-**I don't know what I am doing**
+From a _design_ perspective, the core concept is using the smallest set of primitives that lead to complex, emergent and engaging scenarios (the most “bang for buck” / Pareto Principle / 80-20 rule). Taking inspiration from computers/digital design, nearly every calculation can be performed by strategically arranging switches, and very complex problems can be simulated/abstracted as boolean logic equations. With this “most from least” approach, the powerful primitives of boolean logic, and Engineering as the inspiration: “under the hood” the user is engineering boolean logic structures to create a Turing machine able to meet some specification.
 
-## Whats the big idea
+### Terminology
 
-### Im just a dude
+The application should use its own neutral/agnostic terms that are distinct but recognizable.This enables us to not do be “domain specific” to a particular discipline of Engineering, and will help make the game more approachable/digestible to users without an Engineering background.
 
-Want a game to play with my engineer coworkers. Not a real software dev, not a real programmer, so expectations should be tempered. As just a dude trying to make an actually interesting game, my plan is to focus on a small set of core primitives and leverage combinatorics to create a game that is simple to learn, but has a lot of depth.
+The application should explicitly avoid any reference to “game”, “play”, etc. Instead, the UI/UX should present itself to the user as enterprise software, simulation software, or _maybe_ educational software.
 
-### Decisions
-
-Turn based so people can play as they have time. Deck builder because I like deck builders. Conceptually about engineering because enjenir. 
-
-## Core Concepts
+#### Core Concepts
 
 Build and optimize **systems** to perform some **transformations** through strategic combinations of **components, nodes,** and **modules** (collectively called **elements**) via **signals** over **links** to achieve some level of **capability**.
 
@@ -217,7 +213,17 @@ Note that these are ideas for resources that could be available to user, and thi
     *   card draw by pressing ‘D’
 *   Wiring mode: pressing ‘W’ allows user to draw ‘wires’ between two components
 
-## This Concludes My Presentation
+* * *
 
-**Again. I really don't know what I am doing**. If you want to contribute, feel free to fork the repo and submit a pull request. If you want to help out with the design, please open an issue or discussion. If you for some reason want to donate/support, first of ilu, second you crazy, and third I will have to set something up for that.
-
+> [!CAUTION] 
+> **IMPORTANT INSTRUCTIONS: DO NOT IGNORE**
+> - **Do not provide explanations unless I specifically ask a clarification question.** The goal here is **productivity**, not learning.
+> - **Do not, under any circumstance, for any reason, at any time, provide broken code**
+>   * When providing code to be inserted or modified, make sure to include the full code implementation for the referenced scope, with instructions or a reference to the previous and following code (if applicable).
+>   * This does not mean you have to provide a full updated version of the file every response. What it does mean, is that with a snippet, block, etc, you should never replace code with comment like `// same as before`
+>   * Any code block or section you provide should be able run assuming it is copied and pasted into the correct location in the file
+> - **Do not, under any circumstance, for any reason, at any time, include comments when providing code for .c files**
+>   * In place of comments, use the TODO and/or STUB macros from config.h
+>	    + TODO: basically prints a message telling that this feature needs to be implemented and how to do so (e.g. fix text alignment, replace with sprite/texture/ etc)
+>		+ STUB: used to suppress compiler warnings for non-essential or low priority features (e.g. android client, cross compilation, etc), prints a message as a reminder
+> - **Use doxygen comments and comment blocks with documentation/explanations/instructions in .h files that explain how to use, update, and modify both the header file and its corresponding .c implementation file**
