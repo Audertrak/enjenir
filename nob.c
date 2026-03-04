@@ -1,31 +1,43 @@
 #define NOB_IMPLEMENTATION
-#define NOB_STRIP_PREFIX
-#define NOB_EXPERIMENTAL_DELETE_OLD
-#include "src/nob.h" // Corrected include path
+
+#include "lib/nob.h" 
+
 #undef rename
 
-// Source and Library Paths
-#define SRC_DIR "src/"
-#define RAYLIB_WIN_DIR "lib/raylib-5.5_win64_mingw-w64/"
-#define RAYLIB_WIN_INCLUDE_DIR RAYLIB_WIN_DIR "include/"
-#define RAYLIB_WIN_LIB_FILE RAYLIB_WIN_DIR "lib/libraylib.a"
-// #define L_LINUX "lib/raylib-5.5_linux_amd64/" // For future
-// #define L_WEB "lib/raylib-5._webassembly/" // For future
+#define CC "gcc"
 
-// Build Output Base Paths
-#define BUILD_DIR "build/"
+// source and Library Paths
+#define ASSETS "assets/"
+#define FONTS "assets/fonts/"
+#define ICONS "assets/icons/"
+#define LIB "lib/"
+#define SRC "src/"
+#define WEB_I "web/"
+#define RAYLIB_WEB "lib/raylib-5._webassembly/"
+#define RAYLIB_WEB_I RAYLIB_WEB "include/"
+#define RAYLIB_WEB_L RAYLIB_WEB "lib/libraylib.a"
 
-// Windows Debug Paths
-#define WIN_DEBUG_DIR BUILD_DIR "debug/"
-#define WIN_DEBUG_ARTIFACTS_DIR WIN_DEBUG_DIR "artifacts/"
-#define WIN_DEBUG_EXE WIN_DEBUG_DIR "enjenir-debug.exe"
+#ifdef _WIN32 // windows inc/link paths
+#define RAYLIB "lib/raylib-5.5_win64_mingw-w64/"
+#define RAYLIB_I RAYLIB_WIN_DIR "include/"
+#define RAYLIB_L RAYLIB_WIN_DIR "lib/libraylib.a"
+#endif // _WIN32
 
-// Windows Release Paths
-#define WIN_RELEASE_DIR BUILD_DIR "release/"
-#define WIN_RELEASE_ARTIFACTS_DIR WIN_RELEASE_DIR "artifacts/"
-#define WIN_RELEASE_EXE WIN_RELEASE_DIR "enjenir.exe"
+#ifdef __linux__ // linux inc/link paths
+#define RAYLIB "lib/raylib_5.5_linux_amd64/"
+#define RAYLIB_I RAYLIB_WIN_DIR "include/"
+#define RAYLIB_L RAYLIB_WIN_DIR "lib/libraylib.a"
+#endif // __linux__
 
-// --- Compiler and Linker Flags ---
+// output paths
+#define BUILD "build/"
+#define WEB BUILD "web/"
+#define DEBUG BUILD "debug/"
+#define DEBUG_ARTIFACTS DEBUG "artifacts/"
+#define DEBUG_EXE DEBUG "enjenir-debug.exe"
+#define RELEASE BUILD "release/"
+#define RELEASE_ARTIFACTS RELEASE "artifacts/"
+#define RELEASE_EXE RELEASE "enjenir.exe"
 
 // Common CFLAGS for Windows native builds
 const char *cflags_win_common[] = {"-Wall",
@@ -33,13 +45,8 @@ const char *cflags_win_common[] = {"-Wall",
                                    "-std=c11",
                                    "-DPLATFORM_DESKTOP",
                                    "-DNOGDI",
-                                   "-I" SRC_DIR,
-                                   "-I" RAYLIB_WIN_INCLUDE_DIR};
-size_t cflags_win_common_count = NOB_ARRAY_LEN(cflags_win_common);
-
-// Debug specific CFLAGS for Windows
-const char *cflags_win_debug_extra[] = {"-g", "-DDEBUG"};
-size_t cflags_win_debug_extra_count = NOB_ARRAY_LEN(cflags_win_debug_extra);
+                                   "-I" SRC,
+                                   "-I" RAYLIB_I};
 
 // Release specific CFLAGS for Windows
 const char *cflags_win_release_extra[] = {"-O3", "-DNDEBUG"};
@@ -190,7 +197,7 @@ void do_build_windows_debug() {
                      cflags_win_debug_extra_count);
 
   Procs procs = {0};
-  compile_source_files_in_dir(SRC_DIR, WIN_DEBUG_ARTIFACTS_DIR, &procs,
+  compile_source_files_in_dir(SRC, WIN_DEBUG_ARTIFACTS_DIR, &procs,
                               debug_cflags_cmd.items, debug_cflags_cmd.count);
   if (!procs_wait_and_reset(&procs)) {
     nob_log(ERROR, "Debug compilation failed.");
@@ -221,7 +228,7 @@ void do_build_windows_release() {
                      cflags_win_release_extra_count);
 
   Procs procs = {0};
-  compile_source_files_in_dir(SRC_DIR, WIN_RELEASE_ARTIFACTS_DIR, &procs,
+  compile_source_files_in_dir(SRC, WIN_RELEASE_ARTIFACTS_DIR, &procs,
                               release_cflags_cmd.items,
                               release_cflags_cmd.count);
   if (!procs_wait_and_reset(&procs)) {
@@ -255,14 +262,92 @@ void print_usage() {
 
 int main(int argc, char **argv) {
   NOB_GO_REBUILD_URSELF(argc, argv);
-  shift_args(&argc, &argv); // Consume the program name
+  set_log_handler(&cancer_log_handler);
 
+  Nob_File_Paths input_folders = {0};
+  da_append(&input_folders, ASSETS);
+  da_append(&input_folders, FONTS);
+  da_append(&input_folders, ICONS);
+  da_append(&input_folders, SRC);
+  da_append(&input_folders, LIB);
+  da_append(&input_folders, WEB);
+
+  Nob_File_Paths output_folders = {0};
+  da_append(&output_folders, BUILD);
+  da_append(&output_folders, DEBUG);
+  da_append(&output_folders, RELEASE);
+
+  da_foreach(const char *, folder_path, &output_folders) {
+    // TODO: "walk dir" and make if not exists
+    if (!mkdir_if_not_exists(*folder_path)) {
+      nob_log(NOB_ERROR, "Could not create folder %s", *folder_path);
+      continue;
+    }
+  }
+
+  printf("\n");
+
+  Nob_File_Paths files = {0};
+  // loop through the list of folders and add their files to a dynamic array
+  da_foreach(const char *, folder_path, &input_folders) {
+    Nob_File_Paths tmp = {0}; // temp file buffer
+    if (!read_entire_dir(*folder_path, &tmp)) {
+      nob_log(NOB_ERROR, "Could not read directory %s", *folder_path);
+      da_free(tmp);
+      continue;
+    }
+
+    da_foreach(const char *, entry, &tmp) {
+      const char *name = *entry;
+      if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+        continue;
+      }
+      size_t name_len = strlen(name);
+      if (name_len > 2 && name[name_len - 2] == '.' &&
+          name[name_len - 1] == 'c') {
+        String_Builder full_path = {0};
+        sb_append_cstr(&full_path, *entry);
+
+        size_t folder_len = strlen(*entry);
+        if ((size_t)folder_path[folder_len - 1] == '/') {
+          sb_append_cstr(&full_path, name);
+        } else {
+          sb_append_cstr(&full_path, "/");
+          sb_append_cstr(&full_path, name);
+        }
+        sb_append_null(&full_path);
+
+        da_append(&files, temp_strdup(full_path.items));
+        sb_free(full_path);
+      }
+    }
+    da_free(tmp);
+  }
+  
+  // TODO: make sure windows flags are all handled correctly
+  // TODO: add control flow for web arg to invoke emscripten etc
+  Cmd cmd = {0};
+
+  // TODO: remove debug ifdef and instead add control flow for debug arg and add debug flags
+  //  - no optimizations for debug build
+  //  - include debug symbols
+  //  - "console" app
   if (argc == 0) {
+
     nob_log(INFO, "No target specified. Building Windows Debug by default.");
-    do_build_windows_debug();
+    cmd_append(&cmd, CC, "-Wall", "-Wextra","-std=c11" );
+
+    #ifdef WIN32
+    //do_build_windows_debug();
+    cmd_append(&cmd, "-g", "-DDEBUG");
+    cmd_append(&cmd, "-WL,/subsystem:console");
+    #endif // WIN32
+
   } else {
-    const char *target = argv[0];
-    if (strcmp(target, "clean") == 0) {
+
+    // TODO: clean
+    const char *arg = argv[0];
+    if (strcmp(arg, "clean") == 0) {
       if (argc > 1) {
         const char *clean_target = argv[1];
         if (strcmp(clean_target, "all") == 0)
@@ -279,16 +364,31 @@ int main(int argc, char **argv) {
         nob_log(INFO, "Cleaning all build artifacts.");
         do_clean(BUILD_DIR);
       }
-    } else if (strcmp(target, "debug") == 0) {
+
+  // TODO: release build
+  //  - O2
+  //  - no console
+  //  - no debug symbols
+    cmd_append("-O2");
+    cmd_append(&cmd, "-I"LIB, "-I"SRC, "-I"RAYLIB_I);
+    #ifdef WIN32
+    {
+      cmd_append(&cmd, "-target", "x86_64-windows-gnu", "-lopengl32", "-lgdi32", "-lwinm", "-lkernel32", "-luser32", "-lshell32", "-ladvapi32", "-lole32", "-WL,/subsystem:windows", "-DPLATFORM_DESKTOP", "-DNOGDI" );
+    }
+    #endif
+
+
+
+    } else if (strcmp(arg, "debug") == 0) {
       do_build_windows_debug();
-    } else if (strcmp(target, "release") == 0) {
+    } else if (strcmp(arg, "release") == 0) {
       do_build_windows_release();
-    } else if (strcmp(target, "all") == 0) {
+    } else if (strcmp(arg, "all") == 0) {
       nob_log(INFO, "Building all Windows targets (Debug and Release).");
       do_build_windows_debug();
       do_build_windows_release();
     } else {
-      nob_log(ERROR, "Unknown target: `%s`", target);
+      nob_log(ERROR, "Unknown target: `%s`", arg);
       print_usage();
     }
   }

@@ -1,0 +1,2 @@
+# Architecture
+Client-Server with an API primarily based around the Raylib API. The server tracks game state and sends a buffer/message/string that is interpreted by the client and used to ‘hydrate’ the UI canvas via the Raylib API.

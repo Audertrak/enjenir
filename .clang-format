@@ -1,0 +1,12 @@
+ColumnLimit: 120
+ReflowComments: true
+CommentPragmas: '^ IWYU pragma:|^.*\bIWYU pragma:|^\/\/ pragma:'
+AlignTrailingComments:
+  Enabled: true
+  Kind: Always # Ensures alignment happens consistently
+  AcrossEmptyLines: true
+  AcrossComments: true # This allows alignment to jump over your "// section" comments
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
